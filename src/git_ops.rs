@@ -66,3 +66,58 @@ pub fn humanize_duration(then: DateTime<Utc>) -> String {
         "just now".to_string()
     }
 }
+
+
+pub struct BranchInfo {
+    pub name: String,
+    pub last_commit: Option<DateTime<Utc>>,
+    pub ahead: usize,
+    pub behind: usize,
+}
+
+pub fn list_other_branches(repo: &Repository) -> Vec<BranchInfo> {
+    let current = current_branch(repo);
+    let mut result = Vec::new();
+
+    let main_oid = repo
+        .find_branch("main", git2::BranchType::Local)
+        .ok()
+        .and_then(|b| b.get().target());
+
+    let branches = match repo.branches(Some(git2::BranchType::Local)) {
+        Ok(b) => b,
+        Err(_) => return result,
+    };
+
+    for branch_result in branches {
+        let Ok((branch, _)) = branch_result else { continue };
+        let Some(name) = branch.name().ok().flatten() else { continue };
+
+        if name == current || name == "main" {
+            continue;
+        }
+
+        let Some(branch_oid) = branch.get().target() else { continue };
+
+        let last_commit = repo
+            .find_commit(branch_oid)
+            .ok()
+            .and_then(|c| DateTime::from_timestamp(c.time().seconds(), 0));
+
+        let (ahead, behind) = match main_oid {
+            Some(main_oid) => repo
+                .graph_ahead_behind(branch_oid, main_oid)
+                .unwrap_or((0, 0)),
+            None => (0, 0),
+        };
+
+        result.push(BranchInfo {
+            name: name.to_string(),
+            last_commit,
+            ahead,
+            behind,
+        });
+    }
+
+    result
+}

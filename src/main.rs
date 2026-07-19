@@ -33,9 +33,25 @@ fn main() {
         "Changes: {} modified, {} staged, {} untracked",
         counts.modified, counts.staged, counts.untracked
     );
-    
+
     match git_ops::last_commit_time(&repo) {
         Some(time) => println!("Last commit: {}", git_ops::humanize_duration(time)),
         None => println!("Last commit: unknown"),
+    }
+
+
+    let others = git_ops::list_other_branches(&repo);
+    if !others.is_empty() {
+        println!("Other branches:");
+        for b in others {
+            let staleness = match b.last_commit {
+                Some(t) => git_ops::humanize_duration(t),
+                None => "unknown".to_string(),
+            };
+            println!(
+                "  {} — {}, {} ahead, {} behind main",
+                b.name, staleness, b.ahead, b.behind
+            );
+        }
     }
 }
