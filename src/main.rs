@@ -3,6 +3,9 @@
 use clap::Parser;
 use git2::Repository;
 use chrono::Utc;
+use figlet_rs::FIGlet;
+use colored::Colorize;
+
 
 mod git_ops;
 mod display;
@@ -15,8 +18,12 @@ struct Cli {
 }
 
 fn main() {
-    let cli = Cli::parse();
+    let font = FIGlet::standard().unwrap();
+    let figure = font.convert("gitpulse").unwrap();
+        println!("{}", figure.to_string().truecolor(155, 89, 232));
 
+    let cli = Cli::parse();
+  
     let repo = match Repository::open(".") {
         Ok(repo) => repo,
         Err(e) => {
