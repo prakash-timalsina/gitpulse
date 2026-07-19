@@ -33,4 +33,9 @@ fn main() {
         "Changes: {} modified, {} staged, {} untracked",
         counts.modified, counts.staged, counts.untracked
     );
+    
+    match git_ops::last_commit_time(&repo) {
+        Some(time) => println!("Last commit: {}", git_ops::humanize_duration(time)),
+        None => println!("Last commit: unknown"),
+    }
 }

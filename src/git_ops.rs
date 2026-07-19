@@ -1,4 +1,5 @@
 use git2::Repository;
+use chrono::{DateTime, Utc};
 
 pub fn current_branch(repo: &Repository) -> String {
     match repo.head() {
@@ -35,4 +36,33 @@ pub fn file_status_counts(repo: &Repository) -> FileStatusCounts {
     }
 
     FileStatusCounts { modified, staged, untracked }
+}
+
+
+
+
+pub fn last_commit_time(repo: &Repository) -> Option<DateTime<Utc>> {
+    let head = repo.head().ok()?;
+    let commit = head.peel_to_commit().ok()?;
+    let timestamp = commit.time().seconds();
+    DateTime::from_timestamp(timestamp, 0)
+}
+
+pub fn humanize_duration(then: DateTime<Utc>) -> String {
+    let now = Utc::now();
+    let diff = now.signed_duration_since(then);
+
+    let days = diff.num_days();
+    let hours = diff.num_hours();
+    let minutes = diff.num_minutes();
+
+    if days > 0 {
+        format!("{} day{} ago", days, if days == 1 { "" } else { "s" })
+    } else if hours > 0 {
+        format!("{} hour{} ago", hours, if hours == 1 { "" } else { "s" })
+    } else if minutes > 0 {
+        format!("{} minute{} ago", minutes, if minutes == 1 { "" } else { "s" })
+    } else {
+        "just now".to_string()
+    }
 }
