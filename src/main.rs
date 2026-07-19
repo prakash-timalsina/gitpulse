@@ -1,16 +1,11 @@
-
-
-
-
-
 use clap::Parser;
 use git2::Repository;
 
-/// gitpulse — check the pulse of your repo
+mod git_ops;
+
 #[derive(Parser)]
 #[command(name = "gitpulse", version, about)]
 struct Cli {
-    /// Show extra detail in the output
     #[arg(short, long)]
     verbose: bool,
 }
@@ -26,10 +21,16 @@ fn main() {
         }
     };
 
+    let branch = git_ops::current_branch(&repo);
+    let counts = git_ops::file_status_counts(&repo);
+
     if cli.verbose {
-        println!("Verbose mode is on.");
         println!("Opened repo at: {:?}", repo.path());
     }
 
-    println!("gitpulse is alive.");
+    println!("Branch: {}", branch);
+    println!(
+        "Changes: {} modified, {} staged, {} untracked",
+        counts.modified, counts.staged, counts.untracked
+    );
 }
